@@ -27,7 +27,7 @@ type Service struct {
 }
 
 type UPNP struct {
-	gw *Gateway
+	Gateway *Gateway
 }
 
 type Gateway struct {
@@ -55,7 +55,7 @@ func NewUPNP() (*UPNP, error) {
 		return nil, err
 	}
 
-	if len(u.gw.ControlURL) == 0 || len(u.gw.Host) == 0 {
+	if len(u.Gateway.ControlURL) == 0 || len(u.Gateway.Host) == 0 {
 		return nil, errors.New("upnp: could not get gateway control url or host")
 	}
 
@@ -78,7 +78,7 @@ func (u *UPNP) perform(action, body string) (*http.Response, error) {
 	header.Set("Connection", "Close")
 	header.Set("Content-Length", string(len(envelope)))
 
-	url := "http://" + u.gw.Host + u.gw.ControlURL
+	url := "http://" + u.Gateway.Host + u.Gateway.ControlURL
 	req, _ := http.NewRequest("POST", url, strings.NewReader(envelope))
 	req.Header = header
 
@@ -173,7 +173,7 @@ func (u *UPNP) ExternalIPAddress() (net.IP, error) {
 		case xml.CharData:
 			if found {
 				ip := net.ParseIP(string(se))
-				u.gw.OutsideIP = ip
+				u.Gateway.OutsideIP = ip
 				return ip, nil
 			}
 		}
@@ -184,10 +184,10 @@ func (u *UPNP) ExternalIPAddress() (net.IP, error) {
 
 func (u *UPNP) DeviceDesc() error {
 	header := http.Header{}
-	header.Set("Host", u.gw.Host)
+	header.Set("Host", u.Gateway.Host)
 	header.Set("Connection", "keep-alive")
 
-	request, _ := http.NewRequest("GET", "http://"+u.gw.Host+u.gw.DeviceDescUrl, nil)
+	request, _ := http.NewRequest("GET", "http://"+u.Gateway.Host+u.Gateway.DeviceDescUrl, nil)
 	request.Header = header
 
 	response, err := http.DefaultClient.Do(request)
@@ -206,7 +206,7 @@ func (u *UPNP) DeviceDesc() error {
 					continue
 				}
 				if s.ServiceType == ServiceType {
-					u.gw.ControlURL = s.ControlURL
+					u.Gateway.ControlURL = s.ControlURL
 					return nil
 				}
 			}
@@ -257,7 +257,7 @@ func (u *UPNP) findGateway() error {
 	}
 
 	// Populate Gateway Info
-	u.gw = &Gateway{}
+	u.Gateway = &Gateway{}
 
 	lines := strings.Split(result, "\r\n")
 	for _, line := range lines {
@@ -267,15 +267,15 @@ func (u *UPNP) findGateway() error {
 		}
 		switch strings.ToUpper(strings.Trim(strings.Split(nameValues[0], ":")[0], " ")) {
 		case "ST":
-			u.gw.ST = nameValues[1]
+			u.Gateway.ST = nameValues[1]
 		case "CACHE-CONTROL":
-			u.gw.Cache = nameValues[1]
+			u.Gateway.Cache = nameValues[1]
 		case "LOCATION":
 			urls := strings.Split(strings.Split(nameValues[1], "//")[1], "/")
-			u.gw.Host = urls[0]
-			u.gw.DeviceDescUrl = "/" + urls[1]
+			u.Gateway.Host = urls[0]
+			u.Gateway.DeviceDescUrl = "/" + urls[1]
 		case "SERVER":
-			u.gw.GatewayName = nameValues[1]
+			u.Gateway.GatewayName = nameValues[1]
 		}
 	}
 
