@@ -1,2 +1,8 @@
 # upnp
-UPNP implementation to open ports and get WAN address
+Golang UPNP implementation to open gateway ports and get WAN address
+
+Available functons include:
+- AddMappingPort
+- DelMappingPort
+- ExternalIPAddress
+
