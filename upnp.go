@@ -192,8 +192,8 @@ func (u *UPNP) DeviceDesc() error {
 
 	response, err := http.DefaultClient.Do(request)
 
-	if response.StatusCode != 200 {
-		return err
+	if response == nil || err != nil || response.StatusCode != 200 {
+		return errors.New("upnp: bad response getting device description")
 	}
 
 	decoder := xml.NewDecoder(response.Body)
@@ -254,6 +254,10 @@ func (u *UPNP) findGateway() error {
 		}
 		result = string(buf[:n])
 		break
+	}
+
+	if len(result) == 0 {
+		return errors.New("upnp: cant find gateway device")
 	}
 
 	// Populate Gateway Info
